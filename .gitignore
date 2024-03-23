@@ -1,0 +1,15 @@
+# Mac-specified
+.DS_store
+
+# Certificates information
+**/*.crt
+**/*.csr
+**/*.key
+**/*.srl
+**/*.crl
+
+# Persistent data location for services
+data/**
+
+# Keep the structure with .gitkeep
+!**/.gitkeep
