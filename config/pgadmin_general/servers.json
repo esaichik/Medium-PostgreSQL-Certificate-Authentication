@@ -1,0 +1,46 @@
+{
+    "Servers": {
+        "1": {
+            "Name": "host.docker.internal - superuser",
+            "Group": "Servers",
+            "Host": "host.docker.internal",
+            "Port": 54320,
+            "MaintenanceDB": "postgres",
+            "Username": "superuser",
+            "ConnectionParameters": {
+                "sslmode": "verify-full",
+                "sslrootcert": "/certs/root.crt",
+                "sslcert": "/certs/superuser.crt",
+                "sslkey": "/certs/superuser.key"
+            }
+        },
+        "2": {
+            "Name": "host.docker.internal - application_db_rw_user",
+            "Group": "Servers",
+            "Host": "host.docker.internal",
+            "Port": 54320,
+            "MaintenanceDB": "postgres",
+            "Username": "application_db_rw_user",
+            "ConnectionParameters": {
+                "sslmode": "verify-full",
+                "sslrootcert": "/certs/root.crt",
+                "sslcert": "/certs/application_db_rw_user.crt",
+                "sslkey": "/certs/application_db_rw_user.key"
+            }
+        },
+        "3": {
+            "Name": "host.docker.internal - application_db_ro_user",
+            "Group": "Servers",
+            "Host": "host.docker.internal",
+            "Port": 54320,
+            "MaintenanceDB": "postgres",
+            "Username": "application_db_ro_user",
+            "ConnectionParameters": {
+                "sslmode": "verify-full",
+                "sslrootcert": "/certs/root.crt",
+                "sslcert": "/certs/application_db_ro_user.crt",
+                "sslkey": "/certs/application_db_ro_user.key"
+            }
+        }
+    }
+}

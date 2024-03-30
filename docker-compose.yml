@@ -1,0 +1,83 @@
+version: "3.8"
+
+services:
+  pg_general:
+    image: postgres
+    command: >-
+      -c ssl=on
+      -c ssl_min_protocol_version=TLSv1.3
+      -c ssl_cert_file=/var/lib/postgresql/server.crt
+      -c ssl_key_file=/var/lib/postgresql/server.key
+      -c ssl_ca_file=/var/lib/postgresql/root.crt
+      -c hba_file=/var/lib/postgresql/pg_hba.conf
+      -c logging_collector=on
+      -c log_statement=all
+      -c log_directory=/var/log/postgresql
+      -c log_rotation_age=60d
+      -c log_destination=jsonlog
+    restart: always
+    container_name: postgres_local
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-superuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-super_simple_password}
+      POSTGRES_DB: ${POSTGRES_DB:-application_db}
+    ports:
+      - ${POSTGRES_LOCAL_PORT:-54320}:5432
+    networks:
+      - pg_general_network
+    volumes:
+      # Data and logs volumes mapping
+      - ./data/pg_general/data:/var/lib/postgresql/data
+      - ./data/pg_general/logs:/var/log/postgresql
+      # Security config mapping
+      - ./config/pg_general/pg_hba.conf:/var/lib/postgresql/pg_hba.conf:ro
+      # mTLS server certificate mapping
+      - ./certs/pg_general/server/server.crt:/var/lib/postgresql/server.crt:ro
+      - ./certs/pg_general/server/server.key:/var/lib/postgresql/server.key:ro
+      # mTLS root certificate mapping
+      - ./certs/CA/mtls/root.crt:/var/lib/postgresql/root.crt:ro
+      # Init database scripts mapping
+      - ./config/pg_general/init_db_structure.sql:/docker-entrypoint-initdb.d/init_db_structure.sql:ro
+      - ./config/pg_general/init_db_users_and_roles.sql:/docker-entrypoint-initdb.d/init_db_users_and_roles.sql:ro
+
+  pgadmin_general:
+    image: dpage/pgadmin4
+    restart: always
+    container_name: pgadmin_local
+    depends_on:
+      - pg_general
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-foo@bar.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-bar}
+      PGADMIN_ENABLE_TLS: true
+      # Thanks to Python...
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - ${PGADMIN_LOCAL_PORT:-5050}:443
+    networks:
+      - pg_general_network
+    volumes:
+      # Data volume mapping
+      - ./data/pgadmin_general/pgadmin:/var/lib/pgadmin
+      # Servers config mapping
+      - ./config/pgadmin_general/servers.json:/pgadmin4/servers.json
+      # HTTPS certificates mapping. NB! server.crt -> server.cert, server.key -> server.key
+      - ./certs/pgadmin_general/https/server.crt:/certs/server.cert:ro
+      - ./certs/pgadmin_general/https/server.key:/certs/server.key:ro
+      # mTLS superuser client certificates mapping
+      - ./certs/pg_general/client/superuser.crt:/certs/superuser.crt:ro
+      - ./certs/pg_general/client/superuser.key:/certs/superuser.key:ro
+      # mTLS application_db_rw_user client certificates mapping
+      - ./certs/pg_general/client/application_db_rw_user.crt:/certs/application_db_rw_user.crt:ro
+      - ./certs/pg_general/client/application_db_rw_user.key:/certs/application_db_rw_user.key:ro
+      # mTLS application_db_ro_user client certificates mapping
+      - ./certs/pg_general/client/application_db_ro_user.crt:/certs/application_db_ro_user.crt:ro
+      - ./certs/pg_general/client/application_db_ro_user.key:/certs/application_db_ro_user.key:ro
+      # mTLS root certificate mapping
+      - ./certs/CA/mtls/root.crt:/certs/root.crt:ro
+
+networks:
+  pg_general_network:
+    name: pg_general_network
+    driver: bridge
